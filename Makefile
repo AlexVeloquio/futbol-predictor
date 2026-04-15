@@ -1,25 +1,3 @@
-# ============================================================
-#  Predictor Liga MX — Makefile
-# ============================================================
-
-.PHONY: help setup preprocess train predict test lint format \
-        docker-build docker-push deploy clean
-
-PYTHON      := python3
-VENV        := venv
-AWS_REGION  := us-east-1
-ECR_REPO    := futbol-predictor
-ACCOUNT_ID  := $(shell aws sts get-caller-identity --query Account --output text 2>/dev/null || echo "000000000000")
-ECR_URI     := $(ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
-
-# ---- Default ----
-help: ## Muestra esta ayuda
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
-		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
-
-# ============================================================
-#  Entorno
-# ============================================================
 setup: ## Crea virtualenv e instala dependencias
 	$(PYTHON) -m venv $(VENV)
 	$(VENV)/bin/pip install --upgrade pip
