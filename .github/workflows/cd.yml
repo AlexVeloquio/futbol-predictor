@@ -1,0 +1,66 @@
+name: CD Pipeline
+
+on:
+  push:
+    branches: [main]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPO_TRAINING: futbol-predictor-training
+  ECR_REPO_INFERENCE: futbol-predictor-inference
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Build & Deploy to AWS
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push training image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPO_TRAINING:$IMAGE_TAG -f src/training/Dockerfile .
+          docker tag $ECR_REGISTRY/$ECR_REPO_TRAINING:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPO_TRAINING:latest
+          docker push $ECR_REGISTRY/$ECR_REPO_TRAINING:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPO_TRAINING:latest
+
+      - name: Build & push inference image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPO_INFERENCE:$IMAGE_TAG -f src/inference/Dockerfile .
+          docker tag $ECR_REGISTRY/$ECR_REPO_INFERENCE:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPO_INFERENCE:latest
+          docker push $ECR_REGISTRY/$ECR_REPO_INFERENCE:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPO_INFERENCE:latest
+
+      - name: Update Lambda functions
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          aws lambda update-function-code \
+            --function-name futbol-predictor-training \
+            --image-uri $ECR_REGISTRY/$ECR_REPO_TRAINING:$IMAGE_TAG
+
+          aws lambda update-function-code \
+            --function-name futbol-predictor-inference \
+            --image-uri $ECR_REGISTRY/$ECR_REPO_INFERENCE:$IMAGE_TAG

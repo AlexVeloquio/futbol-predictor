@@ -1,0 +1,63 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+venv/
+.venv/
+env/
+.env
+
+# ===== Jupyter =====
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ===== ML Artifacts =====
+*.pkl
+*.joblib
+*.h5
+*.onnx
+models/
+
+# ===== Data (large files — keep raw samples only) =====
+data/raw/*.csv
+data/processed/*.csv
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/raw/sample_*.csv
+
+# ===== IDE =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ===== Docker =====
+docker-compose.override.yml
+
+# ===== AWS =====
+.aws/
+*.pem
+terraform.tfstate
+terraform.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+*.tfvars
+!*.tfvars.example
+
+# ===== Testing =====
+.coverage
+htmlcov/
+.pytest_cache/
+
+# ===== Misc =====
+*.log
+.env
+.env.*
+!.env.example
